@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Myracloud where
 
@@ -40,13 +42,30 @@ type HTTPResponseConsumer a = HTTP.Response (C.ResumableSource (ResourceT IO) By
 consumeValue :: HTTPResponseConsumer Value
 consumeValue res = HTTP.responseBody res $$+- CA.sinkParser A.json
 
-class MyraCall req resp where
+class MyraHttp a where
+  myraToHttp :: a -> HTTP.Request
+  myraToHttp _ =
+      def { HTTP.method = HTTP.methodGet
+          , HTTP.secure = True
+          , HTTP.host = "api.myracloud.com"
+          , HTTP.port = 443
+          , HTTP.path = "/en/rapi/DNSRecords/example.com/1"
+          , HTTP.queryString = mempty
+          , HTTP.requestHeaders = []
+          , HTTP.requestBody = mempty
+          , HTTP.decompress = HTTP.alwaysDecompress
+          , HTTP.checkStatus = \_ _ _ -> Nothing
+          }
+
+class MyraHttp req => MyraCall req resp where
   consume :: req -> HTTPResponseConsumer resp
-
-data ListDomains
-
-instance MyraCall ListDomains Value where
+  default consume :: resp ~ Value => req -> HTTPResponseConsumer Value
   consume _ = consumeValue
+
+data ListDNSRecords = ListDNSRecords ByteString
+
+instance MyraHttp ListDNSRecords
+instance MyraCall ListDNSRecords Value
 
 iso8601 :: UTCTime -> ByteString
 iso8601 = B8.pack . formatTime defaultTimeLocale "%FT%T%QZ"
@@ -54,20 +73,11 @@ iso8601 = B8.pack . formatTime defaultTimeLocale "%FT%T%QZ"
 myra :: MyraCall req resp => HTTP.Manager -> req -> IO resp
 myra mgr req = do
     now <- getCurrentTime
+    let iso = iso8601 now
+        ht = myraToHttp req
+        ht' = ht { HTTP.requestHeaders = ("Date", iso):(HTTP.requestHeaders ht) }
+  
     undefined
-  where
-    req headers =
-      def { HTTP.method = HTTP.methodGet
-          , HTTP.secure = True
-          , HTTP.host = "api.myracloud.com"
-          , HTTP.port = 443
-          , HTTP.path = "/en/rapi/DNSRecords/example.com/1"
-          , HTTP.queryString = mempty
-          , HTTP.requestHeaders = headers
-          , HTTP.requestBody = mempty
-          , HTTP.decompress = HTTP.alwaysDecompress
-          , HTTP.checkStatus = \_ _ _ -> Nothing
-          }
 
 data MyraSignature = MyraSignature { myra_rqBody :: Maybe ByteString
                                    , myra_method :: HTTP.Method
@@ -79,6 +89,7 @@ data MyraSignature = MyraSignature { myra_rqBody :: Maybe ByteString
 hmacHex = digestToHexByteString . hmacGetDigest
 md5 = digestToHexByteString . (hash :: ByteString -> Digest MD5)
 
+myraSignature :: ByteString -> ByteString -> MyraSignature -> ByteString
 myraSignature apiKey secret MyraSignature{..} = mconcat [ apiKey, ":", b64signature ]
   where
     b64signature = Base64.encode $ toBytes signature
