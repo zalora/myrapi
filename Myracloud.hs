@@ -37,6 +37,7 @@ import System.Locale (defaultTimeLocale)
 import Data.Time.Format (formatTime)
 
 import Crypto.Hash (digestToHexByteString, hmacGetDigest, hash, hmac, HMAC, Digest, MD5, SHA512, SHA256)
+import Data.Byteable (toBytes)
 
 import System.Posix.Env.ByteString (getEnv)
 
@@ -67,7 +68,7 @@ class MyraHttp req => MyraCall req resp where
 data ListDNSRecords = ListDNSRecords ByteString
 
 instance MyraHttp ListDNSRecords where
-  myraToHttp (ListDNSRecords domain) = defHttp { HTTP.path = mconcat ["/en/rapi/DNSRecords/", domain] }
+  myraToHttp (ListDNSRecords domain) = defHttp { HTTP.path = mconcat ["/en/rapi/dnsRecords/", domain ] }
 
 instance MyraCall ListDNSRecords Value
 
@@ -94,7 +95,7 @@ myraSignature apiKey secret MyraSignature{..} = mconcat [ "MYRA ", apiKey, ":", 
     signingKey = hmac (hmacHex dateKey) "myra-api-request" :: HMAC SHA256
 
     signature = hmac (hmacHex signingKey) signingString :: HMAC SHA512
-    b64signature = Base64.encode $ hmacHex signature
+    b64signature = Base64.encode $ toBytes . hmacGetDigest $ signature
 
 myra :: MyraCall req resp => HTTP.Manager -> req -> ResourceT IO resp
 myra mgr req = do
@@ -111,7 +112,7 @@ myra mgr req = do
                                 , myra_date = iso
                                 }
         sig = myraSignature access secret sigData
-        ht' = ht { HTTP.requestHeaders = ("Date", iso):("Authorize", sig):(HTTP.requestHeaders ht) }
+        ht' = ht { HTTP.requestHeaders = ("Date", iso):("Authorization", sig):(HTTP.requestHeaders ht) }
 
     liftIO . print $ HTTP.requestHeaders ht'
     liftIO . print $ sigData
@@ -131,7 +132,7 @@ trySign = do
     let date = "2014-10-06T19:37:54.174591Z"
     print $ myraSignature access secret $ MyraSignature { myra_rqBody = Nothing
                                                         , myra_method = "GET"
-                                                        , myra_uri = "/en/rapi/DNSRecords/zalora.sg"
+                                                        , myra_uri = "/en/rapi/dnsRecords/zalora.sg"
                                                         , myra_contentType = "application/json"
                                                         , myra_date = date
                                                         }
