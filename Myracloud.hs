@@ -18,7 +18,8 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 import qualified Data.ByteString.Base64 as Base64
 import Data.Default
 
-import Data.Aeson (Value)
+import Data.Aeson (Value, FromJSON, parseJSON)
+import Data.Aeson.Types (parseMaybe)
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Parser as A
 import qualified Data.Aeson.Encode.Pretty as A
@@ -40,6 +41,8 @@ import Crypto.Hash (digestToHexByteString, hmacGetDigest, hash, hmac, HMAC, Dige
 import Data.Byteable (toBytes)
 
 import System.Posix.Env.ByteString (getEnv)
+
+import qualified Myracloud.Types as MT
 
 type HTTPResponseConsumer a = HTTP.Response (C.ResumableSource (ResourceT IO) ByteString)
                               -> ResourceT IO a
@@ -120,11 +123,14 @@ myra mgr req = do
     hresp <- HTTP.http ht' mgr
     consume req hresp
 
+castValue :: FromJSON a => Value -> Maybe a
+castValue v = parseMaybe (const (parseJSON v)) v
+
 myra_ :: MyraCall req Value => req -> IO ()
 myra_ req = do
   HTTP.withManager $ \mgr -> do
     value :: Value <- myra mgr req
-    liftIO $ L8.putStrLn $ A.encodePretty value
+    liftIO $ print $ (castValue value :: Maybe (MT.ObjectVO MT.DnsRecord))
 
 trySign = do
     Just access <- getEnv "MYRA_ACCESS_KEY"
