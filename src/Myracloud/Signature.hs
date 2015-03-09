@@ -3,7 +3,7 @@
 
 module Myracloud.Signature where
 
-import Data.Monoid (mconcat, mempty)
+import Data.Monoid (mconcat)
 
 import qualified Data.ByteString as BS
 import Data.ByteString (ByteString)
@@ -19,9 +19,12 @@ data MyraSignature = MyraSignature { myra_rqBody :: Maybe ByteString
                                    , myra_uri :: ByteString
                                    , myra_contentType :: ByteString
                                    , myra_date :: ByteString
-                                   } deriving (Show)
+                                   } deriving (Show, Eq)
 
+hmacHex :: HMAC a -> ByteString
 hmacHex = digestToHexByteString . hmacGetDigest
+
+md5 :: ByteString -> ByteString
 md5 = digestToHexByteString . (hash :: ByteString -> Digest MD5)
 
 myraSignature :: ByteString -> ByteString -> MyraSignature -> ByteString
