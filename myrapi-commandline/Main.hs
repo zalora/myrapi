@@ -3,6 +3,7 @@
 
 module Main where
 
+import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as B8
 import           Data.Char (toLower)
 import           Data.Monoid
@@ -138,9 +139,9 @@ opts :: ParserInfo Options
 opts = info (helper <*> globalOptions)
        (fullDesc <> progDesc "Command line interface to MYRACLOUD")
 
-exit :: (Show a, Show b) => Either a b -> IO ()
+exit :: (Show a, A.ToJSON b) => Either a b -> IO ()
 exit (Left x) = print ("ERROR: Failed with " <> show x) >> exitFailure
-exit (Right x) = print x >> exitSuccess
+exit (Right x) = (print $ A.encode x) >> exitSuccess
 
 main :: IO ()
 main = execParser opts >>= \case

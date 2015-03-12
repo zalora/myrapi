@@ -17,6 +17,7 @@ executable myrapi
   hs-source-dirs:    myrapi-commandline
   build-depends:
     base
+    , aeson
     , bytestring
     , myrapi
     , optparse-applicative

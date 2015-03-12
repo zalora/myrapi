@@ -25,6 +25,7 @@ data ObjectVO a = ObjectVO { error :: Bool
                          } deriving (Show, Generic)
 
 instance FromJSON a => FromJSON (ObjectVO a)
+instance ToJSON a => ToJSON (ObjectVO a)
 
 data ResultVO = ResultVO { result_error :: Bool
                          , result_violationList :: [ViolationVO]
@@ -33,12 +34,14 @@ data ResultVO = ResultVO { result_error :: Bool
 
 instance FromJSON ResultVO where
   parseJSON = genericParseJSON (defaultOptions { fieldLabelModifier = drop 7 })
+instance ToJSON ResultVO
 
 data ViolationVO = ViolationVO { path :: Text
                                , message :: Text
                                } deriving (Show, Generic)
 
 instance FromJSON ViolationVO
+instance ToJSON ViolationVO
 
 data DnsRecord = DnsRecord { id :: Int
                            , modified :: Text -- not really iso 8601
