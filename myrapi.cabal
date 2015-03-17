@@ -28,6 +28,7 @@ executable myrapi
 library
   exposed-modules:
     Myracloud
+    Myracloud.DNS
     Myracloud.Signature
     Myracloud.Types
     Myracloud.Util
