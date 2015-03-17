@@ -94,7 +94,6 @@ runCreate :: Credentials -> DnsRecordCreate -> Site -> BaseUrl
           -> IO (Either String ResultVO)
 runCreate c r s b = runEitherT $ createRecord c r s b
 
-{-
 type DnsDeleteApi = "en" :> "rapi" :> "redirects"
                     :> Capture "site" Site
                     :> Header "Date" Date
@@ -102,7 +101,6 @@ type DnsDeleteApi = "en" :> "rapi" :> "redirects"
                     :> Header "Content-Type" ContentType
                     :> ReqBody DnsRecordDelete
                     :> Post A.Object
-
 
 dnsDeleteApi :: Proxy DnsDeleteApi
 dnsDeleteApi = Proxy
@@ -130,4 +128,38 @@ deleteRecord (access, secret) r site@(Site s') b = do
 runDelete :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
           -> IO (Either String A.Object)
 runDelete c r s b = runEitherT $ deleteRecord c r s b
--}
+
+type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"
+                    :> Capture "site" Site
+                    :> Header "Date" Date
+                    :> Header "Authorization" Authorization
+                    :> Header "Content-Type" ContentType
+                    :> ReqBody DnsRecordUpdate
+                    :> Post A.Object
+
+dnsUpdateApi :: Proxy DnsUpdateApi
+dnsUpdateApi = Proxy
+
+updateRecord :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
+             -> EitherT String IO A.Object
+updateRecord (access, secret) r site@(Site s') b = do
+  iso <- currentTimestamp
+  let contentType = ContentType "application/json"
+      sigData = MyraSignature
+        { myra_rqBody = Just . BL.toStrict $ A.encode r
+        , myra_method = getMethod dnsUpdateApi
+        , myra_uri = "/en/rapi/dnsRecords/" <> B8.pack (unpack s')
+        , myra_contentType = _unContentType contentType
+        , myra_date = iso
+        }
+      sig = myraSignature access secret sigData
+
+  client dnsUpdateApi
+    site
+    (Just $ Date iso)
+    (Just $ Authorization sig)
+    (Just contentType) r b
+
+runUpdate :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
+          -> IO (Either String A.Object)
+runUpdate c r s b = runEitherT $ updateRecord c r s b
