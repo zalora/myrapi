@@ -5,6 +5,7 @@ module Main where
 
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.ByteString.Lazy.Char8 as B8L
 import           Data.Char (toLower)
 import           Data.Monoid
 import qualified Data.Text as T
@@ -13,6 +14,7 @@ import           Myracloud.Types hiding (value)
 import           Options.Applicative
 import           Servant.Common.BaseUrl
 import           System.Exit
+import           System.IO (stdout)
 
 data Options = Options
   { optGlobalCredentials :: Credentials
@@ -141,7 +143,7 @@ opts = info (helper <*> globalOptions)
 
 exit :: (Show a, A.ToJSON b) => Either a b -> IO ()
 exit (Left x) = print ("ERROR: Failed with " <> show x) >> exitFailure
-exit (Right x) = (print $ A.encode x) >> exitSuccess
+exit (Right x) = (B8L.hPutStrLn stdout $ A.encode x) >> exitSuccess
 
 main :: IO ()
 main = execParser opts >>= \case
