@@ -93,3 +93,41 @@ createRecord (access, secret) r site@(Site s') b = do
 runCreate :: Credentials -> DnsRecordCreate -> Site -> BaseUrl
           -> IO (Either String ResultVO)
 runCreate c r s b = runEitherT $ createRecord c r s b
+
+{-
+type DnsDeleteApi = "en" :> "rapi" :> "redirects"
+                    :> Capture "site" Site
+                    :> Header "Date" Date
+                    :> Header "Authorization" Authorization
+                    :> Header "Content-Type" ContentType
+                    :> ReqBody DnsRecordDelete
+                    :> Post A.Object
+
+
+dnsDeleteApi :: Proxy DnsDeleteApi
+dnsDeleteApi = Proxy
+
+deleteRecord :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
+             -> EitherT String IO A.Object
+deleteRecord (access, secret) r site@(Site s') b = do
+  iso <- currentTimestamp
+  let contentType = ContentType "application/json"
+      sigData = MyraSignature
+        { myra_rqBody = Just . BL.toStrict $ A.encode r
+        , myra_method = getMethod dnsDeleteApi
+        , myra_uri = "/en/rapi/redirects/" <> B8.pack (unpack s')
+        , myra_contentType = _unContentType contentType
+        , myra_date = iso
+        }
+      sig = myraSignature access secret sigData
+
+  client dnsDeleteApi
+    site
+    (Just $ Date iso)
+    (Just $ Authorization sig)
+    (Just contentType) r b
+
+runDelete :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
+          -> IO (Either String A.Object)
+runDelete c r s b = runEitherT $ deleteRecord c r s b
+-}

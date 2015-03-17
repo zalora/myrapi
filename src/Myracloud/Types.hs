@@ -77,7 +77,6 @@ instance FromJSON DnsRecordCreate where
               defaultOptions { fieldLabelModifier =
                                   drop (length ("_dnsrc_" :: String)) }
 
-
 data DnsRecordUpdate = DnsRecordUpdate
   { _dnsup_id :: Int
   , _dnsup_modified :: Text
@@ -99,6 +98,23 @@ instance FromJSON DnsRecordUpdate where
   parseJSON = genericParseJSON $
               defaultOptions { fieldLabelModifier =
                                   drop (length ("_dnsup_" :: String)) }
+
+data DnsRecordDelete = DnsRecordDelete
+  { _dnsdel_id :: Int
+  , _dnsdel_modified :: Text
+  } deriving (Show, Eq, Generic)
+
+instance ToJSON DnsRecordDelete where
+  toJSON = genericToJSON $
+           defaultOptions { fieldLabelModifier =
+                               drop (length ("_dnsdel_" :: String)) }
+
+
+instance FromJSON DnsRecordDelete where
+  parseJSON = genericParseJSON $
+              defaultOptions { fieldLabelModifier =
+                                  drop (length ("_dnsdel_" :: String)) }
+
 
 newtype Site = Site { _unSite :: Text }
              deriving (Eq, Show, FromText, ToText)
