@@ -14,6 +14,10 @@ cabal-version:       >=1.10
 
 executable myrapi
   main-is:           Main.hs
+  other-modules:
+    Myracloud.Commands
+    Myracloud.Commands.DNS
+    Myracloud.Commands.Util
   hs-source-dirs:    myrapi-commandline
   build-depends:
     base

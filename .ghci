@@ -1,1 +1,1 @@
-:set -isrc -XOverloadedStrings
+:set -isrc -XOverloadedStrings -imyrapi-commandline
