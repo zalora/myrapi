@@ -36,8 +36,13 @@ data ResultVO = ResultVO { result_error :: Bool
                          } deriving (Show, Generic)
 
 instance FromJSON ResultVO where
-  parseJSON = genericParseJSON (defaultOptions { fieldLabelModifier = drop 7 })
-instance ToJSON ResultVO
+  parseJSON = genericParseJSON $
+              defaultOptions { fieldLabelModifier =
+                                  drop (length ("result_" :: String)) }
+instance ToJSON ResultVO where
+  toJSON = genericToJSON $
+              defaultOptions { fieldLabelModifier =
+                                  drop (length ("result_" :: String)) }
 
 data ViolationVO = ViolationVO { path :: Text
                                , message :: Text
