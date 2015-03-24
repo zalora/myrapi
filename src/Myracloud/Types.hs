@@ -7,7 +7,8 @@
 
 module Myracloud.Types where
 
-import           Data.Aeson
+import           Control.Applicative
+import           Data.Aeson hiding (Result)
 import           Data.Aeson.Types (defaultOptions, Options(..))
 import qualified Data.ByteString.Char8 as B8
 import           Data.Proxy
@@ -161,3 +162,14 @@ type MyraAccessKey = B8.ByteString
 type MyraSecretKey = B8.ByteString
 type Credentials = (MyraAccessKey, MyraSecretKey)
 type Page = Int
+
+data Result a = Failure Value | Success a
+              deriving (Show, Eq, Generic)
+
+instance FromJSON a => FromJSON (Result a) where
+  parseJSON x = Myracloud.Types.Success <$> parseJSON x
+                <|> pure (Failure x)
+
+instance ToJSON a => ToJSON (Result a) where
+  toJSON (Failure v) = v
+  toJSON (Myracloud.Types.Success x) = toJSON x

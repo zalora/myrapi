@@ -141,9 +141,11 @@ opts :: ParserInfo Options
 opts = info (helper <*> globalOptions)
        (fullDesc <> progDesc "Command line interface to MYRACLOUD")
 
-exit :: (Show a, A.ToJSON b) => Either a b -> IO ()
-exit (Left x) = print ("ERROR: Failed with " <> show x) >> exitFailure
-exit (Right x) = (B8L.hPutStrLn stdout $ A.encode x) >> exitSuccess
+exit :: (Show a, A.ToJSON b) => Either a (Result b) -> IO ()
+exit (Left x) = putStrLn ("ERROR: Failed with " <> show x) >> exitFailure
+exit (Right x) = (B8L.hPutStrLn stdout $ A.encode x) >> case x of
+  Myracloud.Types.Success _ -> exitSuccess
+  Myracloud.Types.Failure _ -> exitFailure
 
 main :: IO ()
 main = execParser opts >>= \case

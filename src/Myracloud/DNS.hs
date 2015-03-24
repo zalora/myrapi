@@ -23,7 +23,7 @@ type DnsListApi = "en" :> "rapi" :> "dnsRecords"
                   :> Header "Date" Date
                   :> Header "Authorization" Authorization
                   :> Header "Content-Type" ContentType
-                  :> Get (ObjectVO DnsRecord)
+                  :> Get (Result (ObjectVO DnsRecord))
 
 dnsListApi :: Proxy DnsListApi
 dnsListApi = Proxy
@@ -33,7 +33,7 @@ listRecords :: Credentials
             -> Site -- ^ Site to list the records for
             -> Page
             -> BaseUrl -- ^ details of the server, such as 'myraUri'
-            -> EitherT String IO (ObjectVO DnsRecord)
+            -> EitherT String IO (Result (ObjectVO DnsRecord))
 listRecords (access, secret) site@(Site s') page' base = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -56,7 +56,7 @@ listRecords (access, secret) site@(Site s') page' base = do
     base
 
 runList :: Credentials -> Site -> Page -> BaseUrl
-        -> IO (Either String (ObjectVO DnsRecord))
+        -> IO (Either String (Result (ObjectVO DnsRecord)))
 runList c s p b = runEitherT $ listRecords c s p b
 
 type DnsCreateApi = "en" :> "rapi" :> "dnsRecords"
@@ -65,13 +65,13 @@ type DnsCreateApi = "en" :> "rapi" :> "dnsRecords"
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
                     :> ReqBody DnsRecordCreate
-                    :> Put ResultVO
+                    :> Put (Result ResultVO)
 
 dnsCreateApi :: Proxy DnsCreateApi
 dnsCreateApi = Proxy
 
 createRecord :: Credentials -> DnsRecordCreate -> Site -> BaseUrl
-             -> EitherT String IO ResultVO
+             -> EitherT String IO (Result ResultVO)
 createRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -91,7 +91,7 @@ createRecord (access, secret) r site@(Site s') b = do
     (Just contentType) r b
 
 runCreate :: Credentials -> DnsRecordCreate -> Site -> BaseUrl
-          -> IO (Either String ResultVO)
+          -> IO (Either String (Result ResultVO))
 runCreate c r s b = runEitherT $ createRecord c r s b
 
 type DnsDeleteApi = "en" :> "rapi" :> "redirects"
@@ -100,13 +100,13 @@ type DnsDeleteApi = "en" :> "rapi" :> "redirects"
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
                     :> ReqBody DnsRecordDelete
-                    :> Post A.Object
+                    :> Post (Result A.Object)
 
 dnsDeleteApi :: Proxy DnsDeleteApi
 dnsDeleteApi = Proxy
 
 deleteRecord :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-             -> EitherT String IO A.Object
+             -> EitherT String IO (Result A.Object)
 deleteRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -126,7 +126,7 @@ deleteRecord (access, secret) r site@(Site s') b = do
     (Just contentType) r b
 
 runDelete :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-          -> IO (Either String A.Object)
+          -> IO (Either String (Result A.Object))
 runDelete c r s b = runEitherT $ deleteRecord c r s b
 
 type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"
@@ -135,13 +135,13 @@ type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
                     :> ReqBody DnsRecordUpdate
-                    :> Post A.Object
+                    :> Post (Result A.Object)
 
 dnsUpdateApi :: Proxy DnsUpdateApi
 dnsUpdateApi = Proxy
 
 updateRecord :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
-             -> EitherT String IO A.Object
+             -> EitherT String IO (Result A.Object)
 updateRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -161,5 +161,5 @@ updateRecord (access, secret) r site@(Site s') b = do
     (Just contentType) r b
 
 runUpdate :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
-          -> IO (Either String A.Object)
+          -> IO (Either String (Result A.Object))
 runUpdate c r s b = runEitherT $ updateRecord c r s b
