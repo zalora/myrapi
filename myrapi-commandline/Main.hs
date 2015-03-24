@@ -63,7 +63,7 @@ exit (Right x) = (B8L.hPutStrLn stdout $ A.encode x) >> case x of
 wip :: IO ()
 wip = putStrLn . mconcat $
   [ "Warning: there is something wrong with this feature, use"
-  , "at your own risk and pay attention to the output!"
+  , " at your own risk and pay attention to the output!"
   ]
 
 main :: IO ()
