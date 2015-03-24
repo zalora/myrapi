@@ -71,8 +71,10 @@ runListAll c s b = runEitherT $ loop 1
     loop :: Page -> EitherT String IO (Result [DnsRecord])
     loop p = listRecords c s p b >>= \case
       Failure x -> return $ Failure x
-      Success (list -> []) -> return $ Success []
-      Success (list -> xs) -> fmap (xs ++) <$> loop (succ p)
+      Success x -> case list x of
+        [] -> return $ Success []
+        xs | pageSize x > Prelude.length xs -> return $ Success xs
+           | otherwise -> fmap (xs ++) <$> loop (succ p)
 
 type DnsCreateApi = "en" :> "rapi" :> "dnsRecords"
                     :> Capture "site" Site
