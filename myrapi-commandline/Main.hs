@@ -38,7 +38,7 @@ commandOptions = subparser $
   (command "list" (info (List <$> dnsListOptions)
                    (progDesc "List records for a domain")))
  <>
-  (command "delete" (info (Delete <$> domainOption <*> dnsDeleteOptions)
+  (command "delete" (info (Delete <$> subdomainOption <*> dnsDeleteOptions)
                      (progDesc "Delete records for a domain")))
  <>
   (command "update" (info (Update <$> domainOption <*> dnsUpdateOptions)
