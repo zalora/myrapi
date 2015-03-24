@@ -190,14 +190,14 @@ search :: Credentials -> Site -> BaseUrl
        -> Maybe Page
        -> Site -- ^ Subdomain to search for
        -> IO (Either String (Result [DnsRecord]))
-search c s b p sub = runEitherT $ search' c s b p sub
+search c s b p (Site sub) = runEitherT $ searchBy' c s b p ((== sub) . name)
 
-search' :: Credentials -> Site -> BaseUrl
-        -> Maybe Page -- ^ Specific page to focus the search on, if any
-        -> Site -- ^ Subdomain to search for
-        -> EitherT String IO (Result [DnsRecord])
-search' c s b p (Site sub) = go p >>= \case
-  Success xs -> return . Success $ Prelude.filter ((== sub) . name) xs
+searchBy' :: Credentials -> Site -> BaseUrl
+          -> Maybe Page -- ^ Specific page to focus the search on, if any
+          -> (DnsRecord -> Bool) -- ^ 'Prelude.filter' predicate
+          -> EitherT String IO (Result [DnsRecord])
+searchBy' c s b p rpred = go p >>= \case
+  Success xs -> return . Success $ Prelude.filter rpred xs
   x -> return x
   where
     go Nothing = runListAll' c s b
