@@ -24,6 +24,7 @@ data Options = Options
 
 data Command = Create T.Text DnsRecordCreate
              | List DnsListOptions
+             | ListAll DnsListOptions
              | Delete T.Text DnsRecordDelete
              | Update T.Text DnsRecordUpdate
              deriving (Show, Eq)
@@ -70,7 +71,8 @@ main :: IO ()
 main = execParser opts >>= \case
   Options creds baseUrl com -> case com of
     Create s r -> runCreate creds r (Site s) baseUrl >>= exit
-    List (DnsListOptions {..}) ->
-      runList creds dnsListSite dnsListPage baseUrl >>= exit
+    List (DnsListOptions {..}) -> case dnsListPage of
+      Nothing -> runListAll creds dnsListSite baseUrl >>= exit
+      Just p -> runList creds dnsListSite p baseUrl >>= exit
     Delete s r -> wip >> runDelete creds r (Site s) baseUrl >>= exit
     Update s r -> wip >> runUpdate creds r (Site s) baseUrl >>= exit

@@ -1,9 +1,12 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Myracloud.DNS where
 
+import           Control.Applicative ((<$>))
 import           Control.Monad.Trans.Either
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as B8
@@ -58,6 +61,18 @@ listRecords (access, secret) site@(Site s') page' base = do
 runList :: Credentials -> Site -> Page -> BaseUrl
         -> IO (Either String (Result (ObjectVO DnsRecord)))
 runList c s p b = runEitherT $ listRecords c s p b
+
+-- | Runs the list command on consecutive pages until no more records
+-- are returned.
+runListAll :: Credentials -> Site -> BaseUrl
+           -> IO (Either String (Result [DnsRecord]))
+runListAll c s b = runEitherT $ loop 1
+  where
+    loop :: Page -> EitherT String IO (Result [DnsRecord])
+    loop p = listRecords c s p b >>= \case
+      Failure x -> return $ Failure x
+      Success (list -> []) -> return $ Success []
+      Success (list -> xs) -> fmap (xs ++) <$> loop (succ p)
 
 type DnsCreateApi = "en" :> "rapi" :> "dnsRecords"
                     :> Capture "site" Site

@@ -1,8 +1,10 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Myracloud.Types where
@@ -164,7 +166,7 @@ type Credentials = (MyraAccessKey, MyraSecretKey)
 type Page = Int
 
 data Result a = Failure Value | Success a
-              deriving (Show, Eq, Generic)
+              deriving (Show, Eq, Generic, Functor)
 
 instance FromJSON a => FromJSON (Result a) where
   parseJSON x = Myracloud.Types.Success <$> parseJSON x

@@ -8,7 +8,7 @@ import           Options.Applicative
 
 data DnsListOptions = DnsListOptions
   { dnsListSite :: Site
-  , dnsListPage :: Int
+  , dnsListPage :: Maybe Int
   } deriving (Show, Eq)
 
 
@@ -24,12 +24,12 @@ dnsListOptions = (<*>) helper $ DnsListOptions
       ( long "domain"
      <> metavar "DOMAIN"
      <> help "domain to query the records for" )
-  <*> option auto
+  <*> option (return <$> auto)
       ( long "page"
      <> metavar "PAGE"
-     <> help "page number of the list of records"
-     <> value 1
-     <> showDefault)
+     <> help ("page number of the list of records, e.g. 1;"
+              ++ " lists all pages if unspecified")
+     <> value Nothing)
 
 dnsCreateOptions :: Parser DnsRecordCreate
 dnsCreateOptions = (<*>) helper $ DnsRecordCreate
