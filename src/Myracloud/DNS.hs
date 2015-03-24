@@ -100,13 +100,13 @@ type DnsDeleteApi = "en" :> "rapi" :> "redirects"
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
                     :> ReqBody DnsRecordDelete
-                    :> Post (Result A.Object)
+                    :> Post (Result ResultVO)
 
 dnsDeleteApi :: Proxy DnsDeleteApi
 dnsDeleteApi = Proxy
 
 deleteRecord :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-             -> EitherT String IO (Result A.Object)
+             -> EitherT String IO (Result ResultVO)
 deleteRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -126,7 +126,7 @@ deleteRecord (access, secret) r site@(Site s') b = do
     (Just contentType) r b
 
 runDelete :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-          -> IO (Either String (Result A.Object))
+          -> IO (Either String (Result ResultVO))
 runDelete c r s b = runEitherT $ deleteRecord c r s b
 
 type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"
@@ -135,13 +135,13 @@ type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
                     :> ReqBody DnsRecordUpdate
-                    :> Post (Result A.Object)
+                    :> Post (Result ResultVO)
 
 dnsUpdateApi :: Proxy DnsUpdateApi
 dnsUpdateApi = Proxy
 
 updateRecord :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
-             -> EitherT String IO (Result A.Object)
+             -> EitherT String IO (Result ResultVO)
 updateRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -161,5 +161,5 @@ updateRecord (access, secret) r site@(Site s') b = do
     (Just contentType) r b
 
 runUpdate :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
-          -> IO (Either String (Result A.Object))
+          -> IO (Either String (Result ResultVO))
 runUpdate c r s b = runEitherT $ updateRecord c r s b
