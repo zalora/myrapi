@@ -27,6 +27,7 @@ data Command = Create T.Text DnsRecordCreate
              | ListAll DnsListOptions
              | Delete T.Text DnsRecordDelete
              | Update T.Text DnsRecordUpdate
+             | Search T.Text DnsSearchOptions
              deriving (Show, Eq)
 
 commandOptions :: Parser Command
@@ -42,7 +43,9 @@ commandOptions = subparser $
  <>
   (command "update" (info (Update <$> domainOption <*> dnsUpdateOptions)
                      (progDesc "Update records for a domain")))
-
+ <>
+  (command "search" (info (Search <$> domainOption <*> dnsSearchOptions)
+                     (progDesc "Search for records for specific subdomain")))
 
 
 globalOptions :: Parser Options
@@ -57,7 +60,7 @@ opts = info (helper <*> globalOptions)
 
 exit :: (Show a, A.ToJSON b) => Either a (Result b) -> IO ()
 exit (Left x) = putStrLn ("ERROR: Failed with " <> show x) >> exitFailure
-exit (Right x) = (B8L.hPutStrLn stdout $ A.encode x) >> case x of
+exit (Right x) = B8L.hPutStrLn stdout (A.encode x) >> case x of
   Myracloud.Types.Success _ -> exitSuccess
   Myracloud.Types.Failure _ -> exitFailure
 
@@ -76,3 +79,6 @@ main = execParser opts >>= \case
       Just p -> runList creds dnsListSite p baseUrl >>= exit
     Delete s r -> wip >> runDelete creds r (Site s) baseUrl >>= exit
     Update s r -> wip >> runUpdate creds r (Site s) baseUrl >>= exit
+    Search s (DnsSearchOptions {..}) ->
+      search creds (Site s) baseUrl dnsSearchPage (Site dnsSearchSubdomain)
+      >>= exit

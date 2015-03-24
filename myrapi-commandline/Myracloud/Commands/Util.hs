@@ -9,6 +9,18 @@ import           Myracloud.Types hiding (value)
 import           Options.Applicative
 import           Servant.Common.BaseUrl
 
+domainOption :: Parser T.Text
+domainOption = textOption
+               ( long "domain"
+              <> metavar "DOMAIN"
+              <> help "domain name we're querying")
+
+subdomainOption :: Parser T.Text
+subdomainOption = textOption
+               ( long "subdomain"
+              <> metavar "SUBDOMAIN"
+              <> help "subdomain name we're querying")
+
 credentialsOption :: Parser Credentials
 credentialsOption = (,)
   <$> byteStringOption
@@ -50,6 +62,14 @@ baseUrlOption = BaseUrl
    <> help "port to use for the server"
    <> value 443
    <> showDefault)
+
+optionalPage :: Parser (Maybe Page)
+optionalPage = option (return <$> auto)
+               ( long "page"
+                 <> metavar "PAGE"
+                 <> help ("page number of the list of records, e.g. 1;"
+                          ++ " checks all pages if unspecified")
+                 <> value Nothing)
 
 byteStringOption :: Mod OptionFields String -> Parser B8.ByteString
 byteStringOption x = B8.pack <$> strOption x

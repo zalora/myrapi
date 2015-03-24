@@ -11,6 +11,7 @@ import           Control.Monad.Trans.Either
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.ByteString.Lazy as BL
+import           Data.Function (on)
 import           Data.Monoid
 import           Data.Proxy
 import           Data.Text
@@ -66,7 +67,11 @@ runList c s p b = runEitherT $ listRecords c s p b
 -- are returned.
 runListAll :: Credentials -> Site -> BaseUrl
            -> IO (Either String (Result [DnsRecord]))
-runListAll c s b = runEitherT $ loop 1
+runListAll c s b = runEitherT $ runListAll' c s b
+
+runListAll' :: Credentials -> Site -> BaseUrl
+            -> EitherT String IO (Result [DnsRecord])
+runListAll' c s b = loop 1
   where
     loop :: Page -> EitherT String IO (Result [DnsRecord])
     loop p = listRecords c s p b >>= \case
@@ -180,3 +185,20 @@ updateRecord (access, secret) r site@(Site s') b = do
 runUpdate :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
           -> IO (Either String (Result ResultVO))
 runUpdate c r s b = runEitherT $ updateRecord c r s b
+
+search :: Credentials -> Site -> BaseUrl
+       -> Maybe Page
+       -> Site -- ^ Subdomain to search for
+       -> IO (Either String (Result [DnsRecord]))
+search c s b p sub = runEitherT $ search' c s b p sub
+
+search' :: Credentials -> Site -> BaseUrl
+        -> Maybe Page -- ^ Specific page to focus the search on, if any
+        -> Site -- ^ Subdomain to search for
+        -> EitherT String IO (Result [DnsRecord])
+search' c s b p (Site sub) = go p >>= \case
+  Success xs -> return . Success $ Prelude.filter ((== sub) . name) xs
+  x -> return x
+  where
+    go Nothing = runListAll' c s b
+    go (Just p) = fmap list <$> listRecords c s p b

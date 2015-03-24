@@ -11,12 +11,11 @@ data DnsListOptions = DnsListOptions
   , dnsListPage :: Maybe Int
   } deriving (Show, Eq)
 
+data DnsSearchOptions = DnsSearchOptions
+  { dnsSearchSubdomain :: T.Text
+  , dnsSearchPage :: Maybe Int
+  } deriving (Show, Eq)
 
-domainOption :: Parser T.Text
-domainOption = textOption
-               ( long "domain"
-              <> metavar "DOMAIN"
-              <> help "domain name we're querying")
 
 dnsListOptions :: Parser DnsListOptions
 dnsListOptions = (<*>) helper $ DnsListOptions
@@ -24,12 +23,7 @@ dnsListOptions = (<*>) helper $ DnsListOptions
       ( long "domain"
      <> metavar "DOMAIN"
      <> help "domain to query the records for" )
-  <*> option (return <$> auto)
-      ( long "page"
-     <> metavar "PAGE"
-     <> help ("page number of the list of records, e.g. 1;"
-              ++ " lists all pages if unspecified")
-     <> value Nothing)
+  <*> optionalPage
 
 dnsCreateOptions :: Parser DnsRecordCreate
 dnsCreateOptions = (<*>) helper $ DnsRecordCreate
@@ -95,3 +89,8 @@ dnsUpdateOptions = (<*>) helper $ DnsRecordUpdate
   <*> switch
     ( long "active"
    <> help "whether the record should be made active")
+
+dnsSearchOptions :: Parser DnsSearchOptions
+dnsSearchOptions = (<*>) helper $ DnsSearchOptions
+  <$> subdomainOption
+  <*> optionalPage
