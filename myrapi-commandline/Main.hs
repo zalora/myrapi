@@ -58,10 +58,11 @@ opts :: ParserInfo Options
 opts = info (helper <*> globalOptions)
        (fullDesc <> progDesc "Command line interface to MYRACLOUD")
 
-exit :: (Show a, A.ToJSON b) => Either a (Result b) -> IO ()
+exit :: (IsSuccessful b, Show a, A.ToJSON b) => Either a (Result b) -> IO ()
 exit (Left x) = putStrLn ("ERROR: Failed with " <> show x) >> exitFailure
 exit (Right x) = B8L.hPutStrLn stdout (A.encode x) >> case x of
-  Myracloud.Types.Success _ -> exitSuccess
+  Myracloud.Types.Success r | isSuccessful r -> exitSuccess
+                            | otherwise -> exitFailure
   Myracloud.Types.Failure _ -> exitFailure
 
 wip :: IO ()
@@ -78,7 +79,7 @@ main = execParser opts >>= \case
       Nothing -> runListAll creds dnsListSite baseUrl >>= exit
       Just p -> runList creds dnsListSite p baseUrl >>= exit
     Delete s r -> wip >> runDelete creds r (Site s) baseUrl >>= exit
-    Update s r -> wip >> runUpdate creds r (Site s) baseUrl >>= exit
+    Update s r -> runUpdate creds r (Site s) baseUrl >>= exit
     Search s (DnsSearchOptions {..}) ->
       search creds (Site s) baseUrl dnsSearchPage (Site dnsSearchSubdomain)
       >>= exit

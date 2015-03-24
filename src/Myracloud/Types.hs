@@ -51,6 +51,27 @@ data ViolationVO = ViolationVO { path :: Text
 instance FromJSON ViolationVO
 instance ToJSON ViolationVO
 
+-- | Checks whether the resulting expression was successfull: it may
+-- have been parsed out correctly but we still want to know if the
+-- value we got back indicates success or not.
+--
+-- TODO: so we now have ‘Either String a’ from servant which denotes
+-- one type of failure, ‘Result’ to denote another and this to check
+-- for a different failure still. Maybe we should unify this.
+class IsSuccessful a where
+  isSuccessful :: a -> Bool
+
+instance IsSuccessful (ObjectVO a) where
+  isSuccessful = not . Myracloud.Types.error
+
+instance IsSuccessful ResultVO where
+  isSuccessful = not . result_error
+
+-- | All lists are successful. Subject to change and most likely be
+-- removed.
+instance IsSuccessful [a] where
+  isSuccessful = const True
+
 data DnsRecord = DnsRecord { id :: Int
                            , modified :: Text -- not really iso 8601
                            , created :: Text -- not really iso 8601
