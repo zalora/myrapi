@@ -72,6 +72,10 @@ instance IsSuccessful ResultVO where
 instance IsSuccessful [a] where
   isSuccessful = const True
 
+-- | Always successful
+instance IsSuccessful () where
+  isSuccessful = const True
+
 data DnsRecord = DnsRecord { id :: Int
                            , modified :: Text -- not really iso 8601
                            , created :: Text -- not really iso 8601

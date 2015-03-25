@@ -116,39 +116,44 @@ runCreate :: Credentials -> DnsRecordCreate -> Site -> BaseUrl
           -> IO (Either String (Result ResultVO))
 runCreate c r s b = runEitherT $ createRecord c r s b
 
-type DnsDeleteApi = "en" :> "rapi" :> "redirects"
+{- TODO: Hack until servant-client allows for body parsing from Delete -}
+type DeleteResult = Result () {- ResultVO -}
+
+type DnsDeleteApi = "en" :> "rapi" :> "dnsRecords"
                     :> Capture "site" Site
                     :> Header "Date" Date
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
                     :> ReqBody DnsRecordDelete
-                    :> Post (Result ResultVO)
+                    :> Delete {-Post (Result ResultVO)-}
 
 dnsDeleteApi :: Proxy DnsDeleteApi
 dnsDeleteApi = Proxy
 
 deleteRecord :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-             -> EitherT String IO (Result ResultVO)
+             -> EitherT String IO DeleteResult
 deleteRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
       sigData = MyraSignature
         { myra_rqBody = Just . BL.toStrict $ A.encode r
         , myra_method = getMethod dnsDeleteApi
-        , myra_uri = "/en/rapi/redirects/" <> B8.pack (unpack s')
+        , myra_uri = "/en/rapi/dnsRecords/" <> B8.pack (unpack s')
         , myra_contentType = _unContentType contentType
         , myra_date = iso
         }
       sig = myraSignature access secret sigData
 
-  client dnsDeleteApi
+  {- TODO: Hack until servant-client allows for body parsing from Delete -}
+  r <- client dnsDeleteApi
     site
     (Just $ Date iso)
     (Just $ Authorization sig)
     (Just contentType) r b
+  return $ Success ()
 
 runDelete :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-          -> IO (Either String (Result ResultVO))
+          -> IO (Either String DeleteResult)
 runDelete c r s b = runEitherT $ deleteRecord c r s b
 
 type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"

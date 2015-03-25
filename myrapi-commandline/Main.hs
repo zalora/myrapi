@@ -38,7 +38,7 @@ commandOptions = subparser $
   (command "list" (info (List <$> dnsListOptions)
                    (progDesc "List records for a domain")))
  <>
-  (command "delete" (info (Delete <$> subdomainOption <*> dnsDeleteOptions)
+  (command "delete" (info (Delete <$> domainOption <*> dnsDeleteOptions)
                      (progDesc "Delete records for a domain")))
  <>
   (command "update" (info (Update <$> domainOption <*> dnsUpdateOptions)
@@ -78,6 +78,8 @@ main = execParser opts >>= \case
     List (DnsListOptions {..}) -> case dnsListPage of
       Nothing -> runListAll creds dnsListSite baseUrl >>= exit
       Just p -> runList creds dnsListSite p baseUrl >>= exit
+    -- TODO: Due to servant-client limitation, the return type of
+    -- runDelete is just dummy unit
     Delete s r -> wip >> runDelete creds r (Site s) baseUrl >>= exit
     Update s r -> runUpdate creds r (Site s) baseUrl >>= exit
     Search s (DnsSearchOptions {..}) ->
