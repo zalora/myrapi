@@ -14,6 +14,7 @@ import           Data.Aeson hiding (Result)
 import           Data.Aeson.Types (defaultOptions, Options(..))
 import qualified Data.ByteString.Char8 as B8
 import           Data.Proxy
+import           Data.String
 import           Data.Text (Text)
 import           GHC.Generics
 import qualified Network.HTTP.Types as HTTP
@@ -150,7 +151,7 @@ instance FromJSON DnsRecordDelete where
 
 
 newtype Site = Site { _unSite :: Text }
-             deriving (Eq, Show, FromText, ToText)
+             deriving (Eq, Show, FromText, ToText, IsString)
 
 newtype Date = Date { _unDate :: B8.ByteString }
              deriving (Eq, Show)
