@@ -1,5 +1,7 @@
 resolver: lts-2.21
 packages:
 - '.'
-extra-deps: []
+extra-deps:
+- servant-0.4.4.4
+- servant-client-0.4.4.4
 flags: {}

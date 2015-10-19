@@ -175,16 +175,16 @@ instance ToText ContentType where
 class GetMethod a where
    getMethod :: Proxy a -> B8.ByteString
 
-instance GetMethod (Get x) where
+instance GetMethod (Get meh x) where
    getMethod _ = HTTP.methodGet
 
-instance GetMethod (Post x) where
+instance GetMethod (Post meh x) where
    getMethod _ = HTTP.methodPost
 
-instance GetMethod (Put x) where
+instance GetMethod (Put meh x) where
    getMethod _ = HTTP.methodPut
 
-instance GetMethod (Delete) where
+instance GetMethod (Delete meh x) where
    getMethod _ = HTTP.methodDelete
 
 instance GetMethod b => GetMethod (a :> b) where

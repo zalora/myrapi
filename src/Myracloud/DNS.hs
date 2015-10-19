@@ -27,7 +27,7 @@ type DnsListApi = "en" :> "rapi" :> "dnsRecords"
                   :> Header "Date" Date
                   :> Header "Authorization" Authorization
                   :> Header "Content-Type" ContentType
-                  :> Get (Result (ObjectVO DnsRecord))
+                  :> Get '[JSON] (Result (ObjectVO DnsRecord))
 
 dnsListApi :: Proxy DnsListApi
 dnsListApi = Proxy
@@ -37,7 +37,7 @@ listRecords :: Credentials
             -> Site -- ^ Site to list the records for
             -> Page
             -> BaseUrl -- ^ details of the server, such as 'myraUri'
-            -> EitherT String IO (Result (ObjectVO DnsRecord))
+            -> EitherT ServantError IO (Result (ObjectVO DnsRecord))
 listRecords (access, secret) site@(Site s') page' base = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -53,27 +53,26 @@ listRecords (access, secret) site@(Site s') page' base = do
         }
       sig = myraSignature access secret sigData
 
-  client dnsListApi site page'
+  client dnsListApi base site page'
     (Just $ Date iso)
     (Just $ Authorization sig)
     (Just contentType)
-    base
 
 runList :: Credentials -> Site -> Page -> BaseUrl
-        -> IO (Either String (Result (ObjectVO DnsRecord)))
+        -> IO (Either ServantError (Result (ObjectVO DnsRecord)))
 runList c s p b = runEitherT $ listRecords c s p b
 
 -- | Runs the list command on consecutive pages until no more records
 -- are returned.
 runListAll :: Credentials -> Site -> BaseUrl
-           -> IO (Either String (Result [DnsRecord]))
+           -> IO (Either ServantError (Result [DnsRecord]))
 runListAll c s b = runEitherT $ runListAll' c s b
 
 runListAll' :: Credentials -> Site -> BaseUrl
-            -> EitherT String IO (Result [DnsRecord])
+            -> EitherT ServantError IO (Result [DnsRecord])
 runListAll' c s b = loop 1
   where
-    loop :: Page -> EitherT String IO (Result [DnsRecord])
+    loop :: Page -> EitherT ServantError IO (Result [DnsRecord])
     loop p = listRecords c s p b >>= \case
       Failure x -> return $ Failure x
       Success x -> case list x of
@@ -86,14 +85,14 @@ type DnsCreateApi = "en" :> "rapi" :> "dnsRecords"
                     :> Header "Date" Date
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
-                    :> ReqBody DnsRecordCreate
-                    :> Put (Result ResultVO)
+                    :> ReqBody '[JSON] DnsRecordCreate
+                    :> Put '[JSON] (Result ResultVO)
 
 dnsCreateApi :: Proxy DnsCreateApi
 dnsCreateApi = Proxy
 
 createRecord :: Credentials -> DnsRecordCreate -> Site -> BaseUrl
-             -> EitherT String IO (Result ResultVO)
+             -> EitherT ServantError IO (Result ResultVO)
 createRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -106,32 +105,31 @@ createRecord (access, secret) r site@(Site s') b = do
         }
       sig = myraSignature access secret sigData
 
-  client dnsCreateApi
+  client dnsCreateApi b
     site
     (Just $ Date iso)
     (Just $ Authorization sig)
-    (Just contentType) r b
+    (Just contentType) r
 
 runCreate :: Credentials -> DnsRecordCreate -> Site -> BaseUrl
-          -> IO (Either String (Result ResultVO))
+          -> IO (Either ServantError (Result ResultVO))
 runCreate c r s b = runEitherT $ createRecord c r s b
 
-{- TODO: Hack until servant-client allows for body parsing from Delete -}
-type DeleteResult = Result () {- ResultVO -}
+type DeleteResult = Result () {-ResultVO-}
 
 type DnsDeleteApi = "en" :> "rapi" :> "dnsRecords"
                     :> Capture "site" Site
                     :> Header "Date" Date
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
-                    :> ReqBody DnsRecordDelete
-                    :> Delete {-Post (Result ResultVO)-}
+                    :> ReqBody '[JSON] DnsRecordDelete
+                    :> Delete '[JSON] DeleteResult
 
 dnsDeleteApi :: Proxy DnsDeleteApi
 dnsDeleteApi = Proxy
 
 deleteRecord :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-             -> EitherT String IO DeleteResult
+             -> EitherT ServantError IO DeleteResult
 deleteRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -144,16 +142,14 @@ deleteRecord (access, secret) r site@(Site s') b = do
         }
       sig = myraSignature access secret sigData
 
-  {- TODO: Hack until servant-client allows for body parsing from Delete -}
-  r <- client dnsDeleteApi
+  client dnsDeleteApi b
     site
     (Just $ Date iso)
     (Just $ Authorization sig)
-    (Just contentType) r b
-  return $ Success ()
+    (Just contentType) r
 
 runDelete :: Credentials -> DnsRecordDelete -> Site -> BaseUrl
-          -> IO (Either String DeleteResult)
+          -> IO (Either ServantError DeleteResult)
 runDelete c r s b = runEitherT $ deleteRecord c r s b
 
 type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"
@@ -161,14 +157,14 @@ type DnsUpdateApi = "en" :> "rapi" :> "dnsRecords"
                     :> Header "Date" Date
                     :> Header "Authorization" Authorization
                     :> Header "Content-Type" ContentType
-                    :> ReqBody DnsRecordUpdate
-                    :> Post (Result ResultVO)
+                    :> ReqBody '[JSON] DnsRecordUpdate
+                    :> Post '[JSON] (Result ResultVO)
 
 dnsUpdateApi :: Proxy DnsUpdateApi
 dnsUpdateApi = Proxy
 
 updateRecord :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
-             -> EitherT String IO (Result ResultVO)
+             -> EitherT ServantError IO (Result ResultVO)
 updateRecord (access, secret) r site@(Site s') b = do
   iso <- currentTimestamp
   let contentType = ContentType "application/json"
@@ -181,26 +177,26 @@ updateRecord (access, secret) r site@(Site s') b = do
         }
       sig = myraSignature access secret sigData
 
-  client dnsUpdateApi
+  client dnsUpdateApi b
     site
     (Just $ Date iso)
     (Just $ Authorization sig)
-    (Just contentType) r b
+    (Just contentType) r
 
 runUpdate :: Credentials -> DnsRecordUpdate -> Site -> BaseUrl
-          -> IO (Either String (Result ResultVO))
+          -> IO (Either ServantError (Result ResultVO))
 runUpdate c r s b = runEitherT $ updateRecord c r s b
 
 search :: Credentials -> Site -> BaseUrl
        -> Maybe Page
        -> Site -- ^ Subdomain to search for
-       -> IO (Either String (Result [DnsRecord]))
+       -> IO (Either ServantError (Result [DnsRecord]))
 search c s b p (Site sub) = runEitherT $ searchBy' c s b p ((== sub) . name)
 
 searchBy' :: Credentials -> Site -> BaseUrl
           -> Maybe Page -- ^ Specific page to focus the search on, if any
           -> (DnsRecord -> Bool) -- ^ 'Prelude.filter' predicate
-          -> EitherT String IO (Result [DnsRecord])
+          -> EitherT ServantError IO (Result [DnsRecord])
 searchBy' c s b p rpred = go p >>= \case
   Success xs -> return . Success $ Prelude.filter rpred xs
   x -> return x
