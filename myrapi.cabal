@@ -19,6 +19,7 @@ executable myrapi
     Myracloud.Commands.DNS
     Myracloud.Commands.Util
   hs-source-dirs:    myrapi-commandline
+  default-language:  Haskell2010
   build-depends:
     base
     , aeson
