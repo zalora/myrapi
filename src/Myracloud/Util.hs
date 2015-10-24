@@ -5,7 +5,7 @@ import           Control.Monad.IO.Class
 import qualified Data.ByteString.Char8 as B8
 import           Data.Time.Clock
 import           Data.Time.Format (formatTime)
-import           System.Locale (defaultTimeLocale)
+import           Data.Time.Locale.Compat (defaultTimeLocale)
 
 iso8601 :: UTCTime -> B8.ByteString
 iso8601 = B8.pack . formatTime defaultTimeLocale "%FT%T%QZ"
