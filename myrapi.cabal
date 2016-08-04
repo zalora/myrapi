@@ -47,8 +47,8 @@ library
     , either
     , http-types >=0.8
     , old-locale >=1.0
-    , servant >= 0.4.4.4
-    , servant-client >= 0.4.4.4
+    , servant == 0.4.4.5
+    , servant-client == 0.4.4.5
     , text
     , time >=1.4
     , time-locale-compat
